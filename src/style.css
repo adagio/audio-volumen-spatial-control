@@ -1,0 +1,122 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #f5f4f0;
+  font-family: 'Caveat', cursive;
+  color: #1a1a1a;
+  overflow: hidden;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 100vh;
+  width: 100vw;
+  padding: 16px;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#field {
+  /* Aspect ratio is 420:300 = 1.4. Cap width so height never exceeds
+     (100vh - 180px), leaving room for stack + status. */
+  width: min(92vw, 720px, calc((100vh - 180px) * 1.4));
+  height: auto;
+  display: block;
+}
+
+.stack-wrap {
+  width: min(92vw, 720px);
+}
+
+.stack-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 4px 6px;
+  color: #888;
+  font-size: 14px;
+}
+.stack-title { font-weight: 700; color: #555; }
+.stack-hint { font-size: 13px; }
+
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1.5px dashed #c8c5bd;
+  border-radius: 6px 8px 5px 9px / 8px 5px 9px 6px;
+  background: #fff;
+}
+
+.stack-empty {
+  color: #bbb;
+  font-size: 14px;
+  padding: 4px 6px;
+}
+
+.stack-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 5px;
+  border: 1.5px solid #888;
+  border-radius: 16px 18px 15px 17px / 17px 15px 18px 16px;
+  background: #fafafa;
+  font-family: 'Caveat', cursive;
+  font-size: 17px;
+  color: #1a1a1a;
+  cursor: pointer;
+  user-select: none;
+  transition: background 100ms ease, border-color 100ms ease;
+}
+.stack-item .dot {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #888;
+}
+.stack-item:hover {
+  background: #fffbe0;
+  border-color: #1a1a1a;
+}
+.stack-item.target {
+  background: #f5e642;
+  border-color: #1a1a1a;
+  border-width: 2px;
+}
+
+.app-group { cursor: pointer; }
+.app-group.armed circle {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(245, 230, 66, 0.9));
+}
+
+.head {
+  cursor: grab;
+  transition: filter 120ms ease;
+}
+.head:focus { outline: none; }
+.head:focus ellipse {
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 0 2px #f5e642);
+}
+.head:hover ellipse { fill: #fafafa; }
+.head.dragging { cursor: grabbing; }
+.head.dragging ellipse { fill: #fffbe0; }
+
+.status {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  color: #aaa;
+  font-size: 14px;
+}

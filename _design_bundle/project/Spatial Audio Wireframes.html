@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spatial Audio — Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f5f4f0; font-family: 'Caveat', cursive; }
+
+  /* Sketchy border utility */
+  .sketchy {
+    border: 2px solid #222;
+    border-radius: 2px 6px 3px 5px / 5px 3px 6px 2px;
+  }
+
+  /* Annotation arrow */
+  .anno { color: #555; font-size: 13px; font-family: 'Caveat', cursive; }
+</style>
+</head>
+<body>
+<script type="text/babel">
+
+/* ── shared sketchy style helpers ── */
+const C = {
+  bg: '#faf9f5',
+  ink: '#1a1a1a',
+  faint: '#d0cec8',
+  accent1: '#c0392b',  // red-ish
+  accent2: '#27ae60',  // green-ish
+  accent3: '#2471a3',  // blue
+  yellow: '#f5e642',
+  grid: '#e8e6e0',
+};
+
+/* Sketchy SVG rect helper */
+function SketchRect({ x, y, w, h, fill='none', stroke=C.ink, sw=1.5, rx=3 }) {
+  const jitter = 2;
+  const pts = [
+    [x+Math.random()*jitter, y+Math.random()*jitter],
+    [x+w-Math.random()*jitter, y+Math.random()*jitter],
+    [x+w-Math.random()*jitter, y+h-Math.random()*jitter],
+    [x+Math.random()*jitter, y+h-Math.random()*jitter],
+  ];
+  const d = `M${pts[0][0]},${pts[0][1]} L${pts[1][0]},${pts[1][1]} L${pts[2][0]},${pts[2][1]} L${pts[3][0]},${pts[3][1]} Z`;
+  return <path d={d} fill={fill} stroke={stroke} strokeWidth={sw} strokeLinejoin="round" />;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WIREFRAME A — Top-down spatial field (interactive)
+   ═══════════════════════════════════════════════════════════ */
+function WireframeA() {
+  const W = 420, H = 300;
+  const cx = W / 2;
+  const cy = H / 2;
+  const trackY = cy;
+  const trackLeft = 40, trackRight = W - 40;
+  const [pos, setPos] = React.useState(0); // -1 … +1, 0 = center
+  const dragging = React.useRef(null);
+  const svgRef = React.useRef(null);
+
+  // pos: negative = left app closer, positive = right app closer
+  const app1X = cx - 120 - pos * 90; // left app
+  const app2X = cx + 120 + pos * 90; // right app
+
+  const vol1 = Math.round(50 + (-pos) * 45);
+  const vol2 = Math.round(50 + pos * 45);
+
+  const r1 = 22 + (-pos) * 8;  // bigger = closer
+  const r2 = 22 + pos * 8;
+
+  function startDrag(e, which) {
+    e.stopPropagation();
+    dragging.current = { which, startX: e.clientX || e.touches?.[0]?.clientX, startPos: pos };
+  }
+
+  function onMove(e) {
+    if (!dragging.current) return;
+    const clientX = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
+    const dx = clientX - dragging.current.startX;
+    const svgW = svgRef.current?.getBoundingClientRect().width || W;
+    const scale = W / svgW;
+    const delta = (dx * scale) / 120;
+    const sign = dragging.current.which === 'app1' ? -1 : 1;
+    const newPos = Math.max(-1, Math.min(1, dragging.current.startPos + sign * delta));
+    setPos(newPos);
+  }
+
+  function stopDrag() { dragging.current = null; }
+
+  return (
+    <div style={{ position:'relative', userSelect:'none' }}>
+      <svg ref={svgRef} width={W} height={H} viewBox={`0 0 ${W} ${H}`}
+        style={{ display:'block', cursor: dragging.current ? 'grabbing' : 'default' }}
+        onMouseMove={onMove} onMouseUp={stopDrag} onMouseLeave={stopDrag}
+        onTouchMove={onMove} onTouchEnd={stopDrag}>
+
+        {/* background */}
+        <rect width={W} height={H} fill={C.bg} />
+
+        {/* grid dots */}
+        {Array.from({length:14}).map((_,i) => Array.from({length:10}).map((_,j) => (
+          <circle key={`${i}-${j}`} cx={20+i*30} cy={16+j*30} r={1} fill={C.faint} />
+        )))}
+
+        {/* horizontal axis track */}
+        <line x1={trackLeft} y1={trackY} x2={trackRight} y2={trackY}
+          stroke={C.faint} strokeWidth={2} strokeDasharray="6,4" />
+
+        {/* L / R labels */}
+        <text x={trackLeft-4} y={trackY+18} fill="#aaa" fontSize={14} fontFamily="Caveat" textAnchor="middle">L</text>
+        <text x={trackRight+4} y={trackY+18} fill="#aaa" fontSize={14} fontFamily="Caveat" textAnchor="middle">R</text>
+
+        {/* center marker — the "head" oval */}
+        <ellipse cx={cx} cy={cy} rx={11} ry={18} fill="#fff" stroke={C.ink} strokeWidth={1.5} />
+        <text x={cx} y={cy+32} fill={C.faint} fontSize={11} fontFamily="Caveat" textAnchor="middle">you</text>
+
+        {/* distance lines */}
+        <line x1={app1X} y1={trackY} x2={cx-12} y2={trackY}
+          stroke={C.accent1} strokeWidth={1} strokeDasharray="3,3" opacity={0.5} />
+        <line x1={cx+12} y1={trackY} x2={app2X} y2={trackY}
+          stroke={C.accent2} strokeWidth={1} strokeDasharray="3,3" opacity={0.5} />
+
+        {/* App 1 bubble (left) */}
+        <g style={{ cursor:'grab' }}
+          onMouseDown={e => startDrag(e, 'app1')}
+          onTouchStart={e => startDrag(e, 'app1')}>
+          <circle cx={app1X} cy={trackY} r={r1} fill="#fff" stroke={C.accent1} strokeWidth={2} />
+          <text x={app1X} y={trackY+5} fill={C.accent1} fontSize={14} fontFamily="Caveat" fontWeight="700" textAnchor="middle">VLC</text>
+          {/* vol badge */}
+          <rect x={app1X-16} y={trackY-r1-22} width={32} height={16} rx={3} fill={C.accent1} opacity={0.9} />
+          <text x={app1X} y={trackY-r1-9} fill="#fff" fontSize={12} fontFamily="Caveat" textAnchor="middle">{vol1}%</text>
+        </g>
+
+        {/* App 2 bubble (right) */}
+        <g style={{ cursor:'grab' }}
+          onMouseDown={e => startDrag(e, 'app2')}
+          onTouchStart={e => startDrag(e, 'app2')}>
+          <circle cx={app2X} cy={trackY} r={r2} fill="#fff" stroke={C.accent2} strokeWidth={2} />
+          <text x={app2X} y={trackY+5} fill={C.accent2} fontSize={13} fontFamily="Caveat" fontWeight="700" textAnchor="middle">ScrCpy</text>
+          <rect x={app2X-16} y={trackY-r2-22} width={32} height={16} rx={3} fill={C.accent2} opacity={0.9} />
+          <text x={app2X} y={trackY-r2-9} fill="#fff" fontSize={12} fontFamily="Caveat" textAnchor="middle">{vol2}%</text>
+        </g>
+
+        {/* keyboard hint */}
+        <rect x={cx-60} y={H-36} width={120} height={22} rx={4} fill={C.faint} opacity={0.6} />
+        <text x={cx} y={H-20} fill="#777" fontSize={12} fontFamily="Caveat" textAnchor="middle">← → to move · drag bubble</text>
+
+        {/* annotation */}
+        <text x={8} y={14} fill="#aaa" fontSize={11} fontFamily="Caveat">closer = louder</text>
+      </svg>
+      <div style={{ position:'absolute', top:4, right:8, fontSize:11, fontFamily:'Caveat', color:'#aaa' }}>
+        ↔ interactive
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WIREFRAME B — Stereo runway / panorama strip
+   ═══════════════════════════════════════════════════════════ */
+function WireframeB() {
+  const W = 420, H = 280;
+  const [focusPos, setFocusPos] = React.useState(0); // -1..1
+  const dragging = React.useRef(false);
+  const svgRef = React.useRef(null);
+
+  const trackY = 120, trackLeft = 50, trackRight = 370;
+  const trackW = trackRight - trackLeft;
+  const focusX = trackLeft + (focusPos + 1) / 2 * trackW;
+
+  // App positions derived from focus
+  const app1X = trackLeft + ((-focusPos * 0.5 + 0.25));
+  const app2X = trackRight - ((focusPos * 0.5 + 0.25));
+  // Simpler: apps symmetric
+  const a1x = focusX - 90;
+  const a2x = focusX + 90;
+
+  const vol1 = Math.round(50 - focusPos * 40);
+  const vol2 = Math.round(50 + focusPos * 40);
+
+  function onMove(e) {
+    if (!dragging.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const cx = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
+    const svgX = cx * W / rect.width;
+    const p = Math.max(-1, Math.min(1, ((svgX - trackLeft) / trackW) * 2 - 1));
+    setFocusPos(p);
+  }
+
+  return (
+    <svg ref={svgRef} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display:'block' }}
+      onMouseMove={onMove} onMouseUp={() => dragging.current = false}
+      onMouseLeave={() => dragging.current = false}
+      onTouchMove={onMove} onTouchEnd={() => dragging.current = false}>
+
+      <rect width={W} height={H} fill={C.bg} />
+
+      {/* L/R zone fill */}
+      <rect x={trackLeft} y={trackY-20} width={trackW/2} height={40} fill="#e8f4fd" opacity={0.5} rx={3} />
+      <rect x={trackLeft+trackW/2} y={trackY-20} width={trackW/2} height={40} fill="#fdecea" opacity={0.5} rx={3} />
+      <text x={trackLeft+trackW/4} y={trackY-26} fill="#aaa" fontSize={13} fontFamily="Caveat" textAnchor="middle">LEFT</text>
+      <text x={trackLeft+trackW*3/4} y={trackY-26} fill="#aaa" fontSize={13} fontFamily="Caveat" textAnchor="middle">RIGHT</text>
+
+      {/* Track */}
+      <line x1={trackLeft} y1={trackY} x2={trackRight} y2={trackY} stroke="#bbb" strokeWidth={3} strokeLinecap="round" />
+
+      {/* Center tick */}
+      <line x1={(trackLeft+trackRight)/2} y1={trackY-8} x2={(trackLeft+trackRight)/2} y2={trackY+8} stroke="#ccc" strokeWidth={1.5} />
+
+      {/* Focus puck (draggable) */}
+      <g style={{ cursor:'grab' }}
+        onMouseDown={() => dragging.current = true}
+        onTouchStart={() => dragging.current = true}>
+        <rect x={focusX-20} y={trackY-14} width={40} height={28} rx={4}
+          fill="#fff" stroke={C.ink} strokeWidth={2} />
+        <text x={focusX} y={trackY+5} fill={C.ink} fontSize={13} fontFamily="Caveat" fontWeight="700" textAnchor="middle">focus</text>
+      </g>
+
+      {/* VLC chip */}
+      <rect x={trackLeft-2} y={trackY+30} width={52} height={24} rx={12}
+        fill="#fff" stroke={C.accent1} strokeWidth={2} />
+      <text x={trackLeft+24} y={trackY+46} fill={C.accent1} fontSize={14} fontFamily="Caveat" fontWeight="700" textAnchor="middle">VLC</text>
+      <text x={trackLeft+24} y={trackY+70} fill="#999" fontSize={13} fontFamily="Caveat" textAnchor="middle">{vol1}%</text>
+
+      {/* ScrCpy chip */}
+      <rect x={trackRight-50} y={trackY+30} width={62} height={24} rx={12}
+        fill="#fff" stroke={C.accent2} strokeWidth={2} />
+      <text x={trackRight-19} y={trackY+46} fill={C.accent2} fontSize={14} fontFamily="Caveat" fontWeight="700" textAnchor="middle">ScrCpy</text>
+      <text x={trackRight-19} y={trackY+70} fill="#999" fontSize={13} fontFamily="Caveat" textAnchor="middle">{vol2}%</text>
+
+      {/* balance bar */}
+      <text x={W/2} y={trackY+100} fill="#aaa" fontSize={12} fontFamily="Caveat" textAnchor="middle">balance</text>
+      <rect x={trackLeft} y={trackY+106} width={trackW} height={8} rx={4} fill={C.faint} />
+      {focusPos >= 0
+        ? <rect x={(trackLeft+trackRight)/2} y={trackY+106} width={focusPos*(trackW/2)} height={8} rx={4} fill={C.accent2} />
+        : <rect x={(trackLeft+trackRight)/2+focusPos*(trackW/2)} y={trackY+106} width={-focusPos*(trackW/2)} height={8} rx={4} fill={C.accent1} />
+      }
+
+      <text x={W/2} y={H-10} fill="#aaa" fontSize={12} fontFamily="Caveat" textAnchor="middle">drag "focus" puck · ← →</text>
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WIREFRAME C — Compact tray widget
+   ═══════════════════════════════════════════════════════════ */
+function WireframeC() {
+  const W = 420, H = 280;
+  const [tilt, setTilt] = React.useState(0); // -1..1
+  const dragging = React.useRef(false);
+  const startX = React.useRef(0);
+  const startTilt = React.useRef(0);
+  const svgRef = React.useRef(null);
+
+  // Compact window chrome
+  const winX = 60, winY = 30, winW = 300, winH = 200;
+  const knobCX = winX + winW/2 + tilt * 80;
+  const knobCY = winY + winH/2 + 20;
+
+  const vol1 = Math.round(50 - tilt * 45);
+  const vol2 = Math.round(50 + tilt * 45);
+
+  return (
+    <svg ref={svgRef} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display:'block' }}
+      onMouseMove={e => {
+        if (!dragging.current) return;
+        const rect = svgRef.current.getBoundingClientRect();
+        const dx = e.clientX - startX.current;
+        const p = Math.max(-1, Math.min(1, startTilt.current + dx * W / rect.width / 80));
+        setTilt(p);
+      }}
+      onMouseUp={() => dragging.current = false}
+      onMouseLeave={() => dragging.current = false}>
+
+      <rect width={W} height={H} fill={C.bg} />
+
+      {/* Window frame */}
+      <rect x={winX} y={winY} width={winW} height={winH} rx={6} fill="#fff" stroke={C.ink} strokeWidth={2} />
+      {/* Title bar */}
+      <rect x={winX} y={winY} width={winW} height={28} rx={6} fill="#f0ece6" stroke={C.ink} strokeWidth={2} />
+      <text x={winX+winW/2} y={winY+18} fill={C.ink} fontSize={13} fontFamily="Caveat" fontWeight="700" textAnchor="middle">spatial vol</text>
+      {/* traffic lights sketch */}
+      {[0,14,28].map((ox,i) => <circle key={i} cx={winX+12+ox} cy={winY+14} r={4} fill={['#ff5f57','#febc2e','#28c840'][i]} />)}
+
+      {/* Horizontal rail inside window */}
+      {(() => {
+        const ry = winY + 80;
+        const rx1 = winX + 24, rx2 = winX + winW - 24;
+        const rw = rx2 - rx1;
+        const kx = rx1 + (tilt+1)/2 * rw;
+        const v1 = Math.round(50 - tilt*45);
+        const v2 = Math.round(50 + tilt*45);
+        return <>
+          {/* L label */}
+          <text x={rx1-6} y={ry+5} fill={C.accent1} fontSize={16} fontFamily="Caveat" fontWeight="700" textAnchor="end">VLC</text>
+          {/* R label */}
+          <text x={rx2+6} y={ry+5} fill={C.accent2} fontSize={15} fontFamily="Caveat" fontWeight="700" textAnchor="start">ScrCpy</text>
+          {/* rail */}
+          <line x1={rx1} y1={ry} x2={rx2} y2={ry} stroke="#ddd" strokeWidth={4} strokeLinecap="round" />
+          {/* knob */}
+          <circle cx={kx} cy={ry} r={16} fill="#fff" stroke={C.ink} strokeWidth={2}
+            style={{ cursor:'grab' }}
+            onMouseDown={e => { dragging.current=true; startX.current=e.clientX; startTilt.current=tilt; }}/>
+          <text x={kx} y={ry+5} fill={C.ink} fontSize={11} fontFamily="Caveat" textAnchor="middle">◉</text>
+
+          {/* vol numbers */}
+          <text x={rx1+12} y={ry+30} fill={C.accent1} fontSize={18} fontFamily="Caveat" textAnchor="middle">{v1}%</text>
+          <text x={rx2-12} y={ry+30} fill={C.accent2} fontSize={18} fontFamily="Caveat" textAnchor="middle">{v2}%</text>
+
+          {/* mini bar indicators */}
+          <rect x={rx1} y={ry+40} width={50} height={8} rx={4} fill={C.faint} />
+          <rect x={rx1} y={ry+40} width={v1/2} height={8} rx={4} fill={C.accent1} opacity={0.6} />
+          <rect x={rx2-50} y={ry+40} width={50} height={8} rx={4} fill={C.faint} />
+          <rect x={rx2-50} y={ry+40} width={v2/2} height={8} rx={4} fill={C.accent2} opacity={0.6} />
+
+          {/* center tick */}
+          <line x1={(rx1+rx2)/2} y1={ry-10} x2={(rx1+rx2)/2} y2={ry+10} stroke="#ddd" strokeWidth={1} strokeDasharray="2,2" />
+          <text x={(rx1+rx2)/2} y={ry-14} fill="#bbb" fontSize={10} fontFamily="Caveat" textAnchor="middle">center</text>
+        </>;
+      })()}
+
+      {/* System tray hint */}
+      <text x={winX+winW/2} y={winY+winH-10} fill="#bbb" fontSize={11} fontFamily="Caveat" textAnchor="middle">← → · drag</text>
+
+      {/* annotation: "compact window" */}
+      <text x={winX+winW+12} y={winY+90} fill="#aaa" fontSize={12} fontFamily="Caveat">← small</text>
+      <text x={winX+winW+12} y={winY+104} fill="#aaa" fontSize={12} fontFamily="Caveat">window</text>
+      <text x={winX+winW+12} y={winY+118} fill="#aaa" fontSize={12} fontFamily="Caveat">~320px</text>
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WIREFRAME D — Head perspective + arc
+   ═══════════════════════════════════════════════════════════ */
+function WireframeD() {
+  const W = 420, H = 300;
+  const [pos, setPos] = React.useState(0);
+  const dragging = React.useRef(null);
+  const svgRef = React.useRef(null);
+
+  const cx = W/2, cy = H/2 + 20;
+  const arcR = 100;
+  // apps on an arc, symmetric
+  const angle1 = Math.PI + 0.5 + pos * 0.4;  // left app on arc
+  const angle2 = -0.5 + pos * 0.4;            // right app on arc
+  const app1x = cx + arcR * Math.cos(angle1);
+  const app1y = cy + arcR * Math.sin(angle1) * 0.4;
+  const app2x = cx + arcR * Math.cos(angle2);
+  const app2y = cy + arcR * Math.sin(angle2) * 0.4;
+
+  const vol1 = Math.round(50 - pos * 40);
+  const vol2 = Math.round(50 + pos * 40);
+
+  function startDrag(e, which) {
+    e.stopPropagation();
+    dragging.current = { which, startX: e.clientX ?? e.touches?.[0]?.clientX, startPos: pos };
+  }
+
+  function onMove(e) {
+    if (!dragging.current) return;
+    const cx2 = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
+    const dx = cx2 - dragging.current.startX;
+    const rect = svgRef.current?.getBoundingClientRect();
+    const scale = W / (rect?.width || W);
+    const sign = dragging.current.which === 'app1' ? -1 : 1;
+    setPos(p => Math.max(-1, Math.min(1, dragging.current.startPos + sign * dx * scale / 100)));
+  }
+
+  return (
+    <svg ref={svgRef} width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{ display:'block' }}
+      onMouseMove={onMove} onMouseUp={() => dragging.current=null} onMouseLeave={() => dragging.current=null}
+      onTouchMove={onMove} onTouchEnd={() => dragging.current=null}>
+
+      <rect width={W} height={H} fill={C.bg} />
+
+      {/* arc (perspective ellipse) */}
+      <ellipse cx={cx} cy={cy} rx={arcR} ry={arcR*0.4} fill="none" stroke={C.faint} strokeWidth={1.5} strokeDasharray="5,4" />
+
+      {/* "floor" ellipse */}
+      <ellipse cx={cx} cy={cy+18} rx={arcR} ry={12} fill="none" stroke={C.faint} strokeWidth={1} opacity={0.5} />
+
+      {/* Head */}
+      <ellipse cx={cx} cy={cy-8} rx={20} ry={26} fill="#fff" stroke={C.ink} strokeWidth={2} />
+      {/* ears */}
+      <ellipse cx={cx-22} cy={cy-4} rx={5} ry={8} fill="#fff" stroke={C.ink} strokeWidth={1.5} />
+      <ellipse cx={cx+22} cy={cy-4} rx={5} ry={8} fill="#fff" stroke={C.ink} strokeWidth={1.5} />
+      {/* headphones band */}
+      <path d={`M ${cx-20} ${cy-16} A 20 20 0 0 1 ${cx+20} ${cy-16}`} fill="none" stroke={C.ink} strokeWidth={3} strokeLinecap="round" />
+
+      {/* shadow lines from head to apps */}
+      <line x1={cx-20} y1={cy-4} x2={app1x+16} y2={app1y} stroke={C.accent1} strokeWidth={1} strokeDasharray="3,3" opacity={0.4} />
+      <line x1={cx+20} y1={cy-4} x2={app2x-16} y2={app2y} stroke={C.accent2} strokeWidth={1} strokeDasharray="3,3" opacity={0.4} />
+
+      {/* App 1 */}
+      <g style={{ cursor:'grab' }} onMouseDown={e => startDrag(e,'app1')} onTouchStart={e => startDrag(e,'app1')}>
+        <circle cx={app1x} cy={app1y} r={24} fill="#fff" stroke={C.accent1} strokeWidth={2} />
+        <text x={app1x} y={app1y+5} fill={C.accent1} fontSize={14} fontFamily="Caveat" fontWeight="700" textAnchor="middle">VLC</text>
+        <text x={app1x} y={app1y-30} fill={C.accent1} fontSize={13} fontFamily="Caveat" textAnchor="middle">{vol1}%</text>
+      </g>
+
+      {/* App 2 */}
+      <g style={{ cursor:'grab' }} onMouseDown={e => startDrag(e,'app2')} onTouchStart={e => startDrag(e,'app2')}>
+        <circle cx={app2x} cy={app2y} r={24} fill="#fff" stroke={C.accent2} strokeWidth={2} />
+        <text x={app2x} y={app2y+5} fill={C.accent2} fontSize={13} fontFamily="Caveat" fontWeight="700" textAnchor="middle">ScrCpy</text>
+        <text x={app2x} y={app2y-30} fill={C.accent2} fontSize={13} fontFamily="Caveat" textAnchor="middle">{vol2}%</text>
+      </g>
+
+      {/* axis label */}
+      <text x={cx} y={H-12} fill="#aaa" fontSize={12} fontFamily="Caveat" textAnchor="middle">drag app or ← → · perspective arc view</text>
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN APP — design canvas with all wireframes
+   ═══════════════════════════════════════════════════════════ */
+function App() {
+  return (
+    <DesignCanvas title="Spatial Audio Volume — Wireframes">
+      <DCSection id="options" title="Layout Concepts">
+
+        <DCArtboard id="a" label="A · Spatial Field (top-down)" width={420} height={300}>
+          <WireframeA />
+        </DCArtboard>
+
+        <DCArtboard id="b" label="B · Stereo Runway + focus puck" width={420} height={280}>
+          <WireframeB />
+        </DCArtboard>
+
+        <DCArtboard id="c" label="C · Compact tray window" width={420} height={280}>
+          <WireframeC />
+        </DCArtboard>
+
+        <DCArtboard id="d" label="D · Head + arc (perspective)" width={420} height={300}>
+          <WireframeD />
+        </DCArtboard>
+
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<div id="root"></div>
+</body>
+</html>

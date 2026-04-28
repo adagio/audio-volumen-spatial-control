@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spatial Audio Volume — balance two apps by walking between them</title>
+  <meta name="description" content="A Windows desktop app that controls per-app volume by spatial proximity. Built with Tauri 2 + Rust.">
+  <meta property="og:title" content="Spatial Audio Volume">
+  <meta property="og:description" content="Balance two apps' volume by walking between them. Windows desktop app, Tauri 2 + Rust.">
+  <meta property="og:image" content="assets/poster.png">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <h1>Spatial Audio Volume</h1>
+      <p class="tagline">Two apps. One head. Move closer to one — it gets louder. The other quiets down.</p>
+
+      <div class="video-wrap">
+        <video
+          src="assets/SpatialAudioVolume.mp4"
+          poster="assets/poster.png"
+          controls
+          playsinline
+          preload="metadata">
+          Your browser doesn't render video. <a href="assets/SpatialAudioVolume.mp4">Download the MP4</a>.
+        </video>
+      </div>
+
+      <p class="platform-note">Windows · Tauri 2 · Rust</p>
+    </header>
+
+    <section class="what">
+      <h2>What it does</h2>
+      <ul class="bullets">
+        <li>Lists every audio session on your default render endpoint — same list as <em>Settings → Sound → Volume Mixer</em>.</li>
+        <li>Two slots, left and right. A draggable "you" avatar between them sets both volumes from a single position.</li>
+        <li>Sessions identify by PID, so two windows of the same app don't move together.</li>
+        <li>Drives WASAPI directly. No virtual devices, no rerouting.</li>
+      </ul>
+    </section>
+
+    <section class="controls">
+      <h2>Controls</h2>
+      <table>
+        <thead>
+          <tr><th>Action</th><th>Effect</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Drag the head</td><td>Move along the L/R axis</td></tr>
+          <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>Step left / right</td></tr>
+          <tr><td><kbd>Home</kbd> or <kbd>0</kbd></td><td>Recenter</td></tr>
+          <tr><td>Double-click field</td><td>Recenter</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Disarm a selected slot</td></tr>
+          <tr><td>Click app bubble</td><td>Arm that slot for swap</td></tr>
+          <tr><td>Click stack chip (slot armed)</td><td>Swap session into the armed slot</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="install">
+      <h2>Run it</h2>
+      <p>Prerequisites: Rust toolchain and <code>cargo-tauri</code>. Node is <em>not</em> required — the frontend is plain static files.</p>
+      <pre><code>cargo tauri dev</code></pre>
+      <p>For a release build:</p>
+      <pre><code>cargo tauri build</code></pre>
+      <p class="muted">The bundled installer lands in <code>src-tauri/target/release/bundle/</code>.</p>
+    </section>
+
+    <section class="how">
+      <h2>Under the hood</h2>
+      <p>The audio backend talks to <strong>WASAPI</strong>'s <code>IAudioSessionManager2</code> and <code>ISimpleAudioVolume</code> via the <code>windows</code> crate. The avatar's axis position maps to two complementary gains: at <code>-1</code> the left slot is at 100% and the right at 0%; at <code>+1</code> it's the opposite; at <code>0</code> both are balanced.</p>
+      <p>Frontend is vanilla HTML/CSS/JS — no bundler, no framework. The hand-drawn feel comes from a single SVG field with sketchy strokes and the Caveat font.</p>
+    </section>
+
+    <footer>
+      <p>Built with Tauri 2 + Rust. <a href="#" class="repo-link">Source on GitHub →</a></p>
+    </footer>
+  </main>
+</body>
+</html>
