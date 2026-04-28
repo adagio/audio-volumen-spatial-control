@@ -65,15 +65,20 @@ export const Scene6Outro: React.FC = () => {
       <div
         style={{
           fontFamily: CAVEAT,
-          fontWeight: 400,
-          fontSize: 44,
-          color: COLORS.muted,
+          fontWeight: 700,
+          fontSize: 60,
+          color: COLORS.ink,
           opacity: subtitleOp,
           textAlign: "center",
           marginTop: 60,
+          background: COLORS.cyan,
+          padding: "10px 36px",
+          borderRadius: 18,
+          border: `3px solid ${COLORS.ink}`,
+          boxShadow: `5px 6px 0 ${COLORS.ink}`,
         }}
       >
-        Tauri 2 · Rust · Windows
+        ↓ ¡Descarga la app!
       </div>
     </AbsoluteFill>
   );

@@ -113,10 +113,11 @@ export const Field: React.FC<FieldProps> = ({
         y1={cy}
         x2={x + 30 + (width - 60) * axisProgress}
         y2={cy}
-        stroke={COLORS.muted}
-        strokeWidth={2}
-        strokeDasharray="6 8"
+        stroke={COLORS.ink}
+        strokeWidth={3.5}
+        strokeDasharray="14 14"
         strokeLinecap="round"
+        opacity={0.55}
       />
       {showTicks && (
         <g>

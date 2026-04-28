@@ -110,6 +110,24 @@ export const Scene4Demo: React.FC = () => {
 
         {/* Head */}
         <Head cx={headPx} cy={FIELD.cy} r={44} />
+
+        {/* Mouse cursor anchored to the head — frames the motion as a real drag */}
+        <g opacity={fadeIn(frame, 14, 12)}>
+          <g transform={`translate(${headPx + 26} ${FIELD.cy + 10}) scale(2)`}>
+            <path
+              d="M 0 0 L 0 19 L 5.2 14.5 L 9.2 22.5 L 12.4 21 L 8.4 13 L 15 13 Z"
+              fill="#ffffff"
+              stroke={COLORS.ink}
+              strokeWidth={1.5}
+              strokeLinejoin="round"
+            />
+          </g>
+          {/* Drag flicks — small motion ticks next to the cursor, hint of active drag */}
+          <g stroke={COLORS.ink} strokeWidth={3} strokeLinecap="round" opacity={0.8}>
+            <line x1={headPx + 64} y1={FIELD.cy + 26} x2={headPx + 86} y2={FIELD.cy + 26} />
+            <line x1={headPx + 68} y1={FIELD.cy + 40} x2={headPx + 84} y2={FIELD.cy + 40} />
+          </g>
+        </g>
       </svg>
 
       {/* Readout */}
