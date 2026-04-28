@@ -173,46 +173,6 @@ kbd {
   box-shadow: 1px 2px 0 var(--ink);
 }
 
-/* INSTALL */
-.install p {
-  font-size: 22px;
-  margin: 12px 0;
-}
-.install pre {
-  background: var(--ink);
-  color: var(--paper);
-  padding: 14px 18px;
-  border-radius: 8px 12px 6px 10px / 10px 6px 12px 8px;
-  font-family: ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
-  font-size: 16px;
-  overflow-x: auto;
-  margin: 12px 0;
-  box-shadow: 3px 4px 0 var(--ink);
-}
-.install pre code { font-family: inherit; }
-.install code:not(pre code),
-.how code {
-  background: var(--highlight);
-  padding: 1px 8px;
-  border-radius: 4px 6px 3px 5px / 5px 3px 6px 4px;
-  font-family: ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
-  font-size: 15px;
-  color: var(--ink);
-}
-.muted { color: var(--muted); font-size: 20px; }
-
-/* HOW */
-.how p {
-  font-size: 23px;
-  margin: 14px 0;
-  color: #2a2a2a;
-}
-.how strong {
-  background: var(--accent);
-  padding: 0 4px;
-  font-weight: 600;
-}
-
 /* FOOTER */
 footer {
   margin-top: 80px;

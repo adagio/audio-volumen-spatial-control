@@ -65,23 +65,15 @@
       </table>
     </section>
 
-    <section class="install">
-      <h2>Run it</h2>
-      <p>Prerequisites: Rust toolchain and <code>cargo-tauri</code>. Node is <em>not</em> required — the frontend is plain static files.</p>
-      <pre><code>cargo tauri dev</code></pre>
-      <p>For a release build:</p>
-      <pre><code>cargo tauri build</code></pre>
-      <p class="muted">The bundled installer lands in <code>src-tauri/target/release/bundle/</code>.</p>
-    </section>
-
-    <section class="how">
-      <h2>Under the hood</h2>
-      <p>The audio backend talks to <strong>WASAPI</strong>'s <code>IAudioSessionManager2</code> and <code>ISimpleAudioVolume</code> via the <code>windows</code> crate. The avatar's axis position maps to two complementary gains: at <code>-1</code> the left slot is at 100% and the right at 0%; at <code>+1</code> it's the opposite; at <code>0</code> both are balanced.</p>
-      <p>Frontend is vanilla HTML/CSS/JS — no bundler, no framework. The hand-drawn feel comes from a single SVG field with sketchy strokes and the Caveat font.</p>
-    </section>
-
     <footer>
-      <p>Built with Tauri 2 + Rust. <a href="#" class="repo-link">Source on GitHub →</a></p>
+      <p>Built with Tauri 2 + Rust.</p>
+      <p>
+        <a href="https://github.com/adagio/audio-volumen-spatial-control">Source on GitHub</a>
+        ·
+        <a href="https://github.com/adagio/audio-volumen-spatial-control#readme">Technical details</a>
+        ·
+        <a href="https://github.com/adagio/audio-volumen-spatial-control/releases/latest">Download</a>
+      </p>
     </footer>
   </main>
 </body>
