@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://audio-volumen-spatial-control.franco-cedillo.workers.dev/assets/logo.png" alt="Spatial Audio Volume logo" width="128">
+</p>
+
 # Spatial Audio Volume
 
 Desktop app to balance the volume of two running applications spatially, by
