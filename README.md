@@ -7,6 +7,15 @@ audio sessions you'd see in **Settings → System → Sound → Volume Mixer**.
 
 Built with Tauri 2 + Rust, vanilla HTML/CSS/JS frontend.
 
+## Demo
+
+<video src="https://audio-volumen-spatial-control.franco-cedillo.workers.dev/assets/SpatialAudioVolume.mp4" poster="https://audio-volumen-spatial-control.franco-cedillo.workers.dev/assets/poster.png" controls muted playsinline width="720"></video>
+
+[![Demo poster](https://audio-volumen-spatial-control.franco-cedillo.workers.dev/assets/poster.png)](https://audio-volumen-spatial-control.franco-cedillo.workers.dev/)
+
+[▶ Ver demo en el sitio](https://audio-volumen-spatial-control.franco-cedillo.workers.dev/) ·
+[Descargar MP4](https://audio-volumen-spatial-control.franco-cedillo.workers.dev/assets/SpatialAudioVolume.mp4)
+
 ## What it does
 
 - Lists every audio session active on the default render endpoint (the same
