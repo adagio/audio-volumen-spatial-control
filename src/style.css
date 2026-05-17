@@ -120,3 +120,126 @@ html, body {
   color: #aaa;
   font-size: 14px;
 }
+
+/* ── Modo Mini ────────────────────────────────────────────────────── */
+
+.mini-enter {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 5px;
+  border: 1.5px solid #c8c5bd;
+  border-radius: 14px 16px 13px 15px / 15px 13px 16px 14px;
+  background: #fff;
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  color: #777;
+  cursor: pointer;
+  transition: background 100ms ease, border-color 100ms ease, color 100ms ease;
+}
+.mini-enter:hover {
+  background: #fffbe0;
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+
+/* default state: hide the mini bar */
+#mini-bar { display: none; }
+
+/* mini-mode-on: hide the main stage, show the mini bar full-window */
+body.mini-on .stage { display: none; }
+body.mini-on .mini-enter { display: none; }
+body.mini-on {
+  background: transparent;
+}
+body.mini-on #mini-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100vw;
+  height: 100vh;
+  padding: 8px 10px;
+  background: #faf9f5;
+  border: 1.5px solid #c8c5bd;
+  border-radius: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: move;
+  overflow: hidden;
+}
+
+.mini-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 56px;
+  line-height: 1.05;
+}
+.mini-app.left .mini-name  { color: #c0392b; }
+.mini-app.right .mini-name { color: #27ae60; }
+.mini-name {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 17px;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-vol {
+  font-family: 'Caveat', cursive;
+  font-size: 14px;
+  color: #555;
+}
+
+.mini-field {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 64px;
+  min-width: 120px;
+}
+#mini-head { cursor: grab; }
+#mini-head.dragging { cursor: grabbing; }
+#mini-head:hover ellipse { fill: #fffbe0; }
+
+.mini-exit {
+  position: relative;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid #c8c5bd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  color: #555;
+  padding: 0;
+}
+.mini-exit:hover { border-color: #1a1a1a; color: #1a1a1a; }
+.mini-exit .hold-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 100%;
+  background: rgba(245, 230, 66, 0.55);
+  pointer-events: none;
+  transition: width 120ms ease;
+}
+.mini-exit.holding .hold-fill {
+  width: 100%;
+  transition: width 3s linear;
+}
+.mini-exit-glyph {
+  position: relative;
+  z-index: 1;
+  line-height: 1;
+}

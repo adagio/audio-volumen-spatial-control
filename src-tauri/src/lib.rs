@@ -2,6 +2,9 @@
 mod audio;
 
 #[cfg(target_os = "windows")]
+mod overlay;
+
+#[cfg(target_os = "windows")]
 pub use audio::Session;
 
 #[cfg(not(target_os = "windows"))]
@@ -55,6 +58,47 @@ fn set_volume_for_pid(pid: u32, volume: f32) -> Result<bool, String> {
     }
 }
 
+#[tauri::command]
+fn set_mini_mode(window: tauri::WebviewWindow, enabled: bool) -> Result<(), String> {
+    use tauri::{LogicalSize, Size};
+
+    window
+        .set_always_on_top(enabled)
+        .map_err(|e| format!("set_always_on_top: {e}"))?;
+    window
+        .set_skip_taskbar(enabled)
+        .map_err(|e| format!("set_skip_taskbar: {e}"))?;
+    window
+        .set_decorations(!enabled)
+        .map_err(|e| format!("set_decorations: {e}"))?;
+    window
+        .set_resizable(!enabled)
+        .map_err(|e| format!("set_resizable: {e}"))?;
+
+    // Set min size first so the shrink to mini dimensions is not clamped
+    // by the larger min in tauri.conf.json.
+    let (min_w, min_h, w, h) = if enabled {
+        (300.0, 80.0, 380.0, 96.0)
+    } else {
+        (520.0, 480.0, 760.0, 620.0)
+    };
+    window
+        .set_min_size(Some(Size::Logical(LogicalSize::new(min_w, min_h))))
+        .map_err(|e| format!("set_min_size: {e}"))?;
+    window
+        .set_size(Size::Logical(LogicalSize::new(w, h)))
+        .map_err(|e| format!("set_size: {e}"))?;
+
+    #[cfg(target_os = "windows")]
+    {
+        let hwnd = window.hwnd().map_err(|e| format!("hwnd: {e}"))?;
+        let raw = hwnd.0 as isize;
+        overlay::apply(raw, enabled)?;
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -71,7 +115,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             list_audio_sessions,
             set_app_volume,
-            set_volume_for_pid
+            set_volume_for_pid,
+            set_mini_mode
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

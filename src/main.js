@@ -25,6 +25,16 @@ const head = $('head');
 const headEllipse = $('head-ellipse');
 const headLabel = $('head-label');
 
+// Mini-mode elements (may stay hidden but always present in the DOM).
+const miniBar = $('mini-bar');
+const miniSvg = $('mini-field');
+const miniHead = $('mini-head');
+const miniHeadEllipse = $('mini-head-ellipse');
+const miniEnterBtn = $('mini-enter-btn');
+const miniExitBtn = $('mini-exit-btn');
+
+const MINI_KEY = 'sav:mini';
+
 // ── application state ────────────────────────────────────────────────
 const state = {
   sessions: [],           // [{ pid, process_name, volume, muted }]
@@ -130,6 +140,18 @@ function renderField() {
   $('dist-line-2').setAttribute('y1', trackY);
   $('dist-line-2').setAttribute('x2', APP2_X - APP_R);
   $('dist-line-2').setAttribute('y2', trackY);
+
+  // Mirror to the mini bar (always update; CSS hides it when off).
+  // Mini SVG viewBox is 240×40, track runs x=20..220, midpoint at 120, travel=100.
+  const miniHeadX = 120 + state.pos * 100;
+  miniHeadEllipse.setAttribute('cx', miniHeadX);
+  miniHead.setAttribute('aria-valuenow', Math.round(state.pos * 100));
+  $('mini-dist-1').setAttribute('x2', miniHeadX - 8);
+  $('mini-dist-2').setAttribute('x1', miniHeadX + 8);
+  $('mini-vol-1').textContent = `${vol1}%`;
+  $('mini-vol-2').textContent = `${vol2}%`;
+  $('mini-label-1').textContent = left ? displayName(left.process_name) : '—';
+  $('mini-label-2').textContent = right ? displayName(right.process_name) : '—';
 
   // armed visual
   $('app-1').classList.toggle('armed', state.armed === 'left');
@@ -284,28 +306,45 @@ let dragging = null;
 let justFinishedDrag = false;
 const clientX = (e) => e.clientX ?? e.touches?.[0]?.clientX ?? 0;
 
-head.addEventListener('mousedown', startDrag);
-head.addEventListener('touchstart', startDrag, { passive: false });
+head.addEventListener('mousedown', (e) => startDrag(e, head, svg, DRAG_PIXELS_PER_UNIT));
+head.addEventListener('touchstart', (e) => startDrag(e, head, svg, DRAG_PIXELS_PER_UNIT), { passive: false });
 
-function startDrag(e) {
+// Mini head shares state.pos with the main head. Mini SVG viewBox is 240
+// wide with usable travel = 100 (track 20→220, head clamped to ±100 from
+// center). Pixels-per-unit at viewBox resolution is therefore 100 — once
+// scaled by svgW/240 in onPointerMove this becomes the on-screen pixel rate.
+const MINI_DRAG_PIXELS_PER_UNIT = 100;
+const MINI_VBW = 240;
+miniHead.addEventListener('mousedown', (e) => startDrag(e, miniHead, miniSvg, MINI_DRAG_PIXELS_PER_UNIT, MINI_VBW));
+miniHead.addEventListener('touchstart', (e) => startDrag(e, miniHead, miniSvg, MINI_DRAG_PIXELS_PER_UNIT, MINI_VBW), { passive: false });
+
+function startDrag(e, headEl, svgEl, pxPerUnit, vbWidth) {
   e.preventDefault();
   e.stopPropagation();
-  dragging = { startClientX: clientX(e), startPos: state.pos, moved: false };
-  head.classList.add('dragging');
+  dragging = {
+    startClientX: clientX(e),
+    startPos: state.pos,
+    moved: false,
+    headEl,
+    svgEl,
+    pxPerUnit,
+    vbWidth: vbWidth ?? W,
+  };
+  headEl.classList.add('dragging');
 }
 
 function onPointerMove(e) {
   if (!dragging) return;
   const dx = clientX(e) - dragging.startClientX;
   if (Math.abs(dx) > 2) dragging.moved = true;
-  const svgW = svg.getBoundingClientRect().width || W;
-  const scale = W / svgW;
-  setPos(dragging.startPos + (dx * scale) / DRAG_PIXELS_PER_UNIT);
+  const svgW = dragging.svgEl.getBoundingClientRect().width || dragging.vbWidth;
+  const scale = dragging.vbWidth / svgW;
+  setPos(dragging.startPos + (dx * scale) / dragging.pxPerUnit);
 }
 
 function onPointerUp() {
   if (!dragging) return;
-  head.classList.remove('dragging');
+  dragging.headEl.classList.remove('dragging');
   if (dragging.moved) {
     justFinishedDrag = true;
     setTimeout(() => { justFinishedDrag = false; }, 50);
@@ -320,6 +359,65 @@ window.addEventListener('mouseleave', onPointerUp);
 window.addEventListener('touchend', onPointerUp);
 
 svg.addEventListener('dblclick', () => setPos(0));
+miniSvg.addEventListener('dblclick', (e) => {
+  // Avoid the exit button area accidentally
+  if (e.target.closest('#mini-exit-btn')) return;
+  setPos(0);
+});
+
+// ── Modo Mini ────────────────────────────────────────────────────────
+async function setMini(enabled) {
+  const inv = invoke();
+  if (inv) {
+    try {
+      await inv('set_mini_mode', { enabled });
+    } catch (e) {
+      console.warn('set_mini_mode failed:', e);
+      return;
+    }
+  }
+  document.body.classList.toggle('mini-on', enabled);
+  localStorage.setItem(MINI_KEY, enabled ? '1' : '0');
+  renderField();
+}
+
+miniEnterBtn.addEventListener('click', () => setMini(true));
+
+// Hold-to-confirm exit (3s). Pointer events handle both mouse and touch.
+let holdTimer = null;
+let holdSuppressClickUntil = 0;
+
+function cancelHold() {
+  if (holdTimer) {
+    clearTimeout(holdTimer);
+    holdTimer = null;
+  }
+  miniExitBtn.classList.remove('holding');
+}
+
+miniExitBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  cancelHold();
+  miniExitBtn.classList.add('holding');
+  holdTimer = setTimeout(() => {
+    holdTimer = null;
+    miniExitBtn.classList.remove('holding');
+    // Suppress the trailing click that would otherwise fire after pointerup,
+    // so the re-shown #mini-enter-btn underneath doesn't get a phantom click.
+    holdSuppressClickUntil = Date.now() + 400;
+    setMini(false);
+  }, 3000);
+});
+miniExitBtn.addEventListener('pointerup', cancelHold);
+miniExitBtn.addEventListener('pointerleave', cancelHold);
+miniExitBtn.addEventListener('pointercancel', cancelHold);
+// Swallow the trailing click after a successful hold (ghost-click guard).
+miniExitBtn.addEventListener('click', (e) => {
+  if (Date.now() < holdSuppressClickUntil) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
 
 // ── boot ─────────────────────────────────────────────────────────────
 stage.focus();
@@ -327,3 +425,9 @@ renderField();
 renderStack();
 refreshSessions();
 setInterval(refreshSessions, POLL_MS);
+
+// Restore Mini state if persisted. Defer one tick so the initial render
+// settles before we resize the window.
+if (localStorage.getItem(MINI_KEY) === '1') {
+  setTimeout(() => setMini(true), 0);
+}

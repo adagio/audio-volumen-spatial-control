@@ -61,6 +61,15 @@
       <text x="8" y="14" fill="#aaa" font-size="11" font-family="Caveat">closer = louder</text>
     </svg>
 
+    <button id="mini-enter-btn" class="mini-enter" type="button"
+            aria-label="Enter Mini Mode" title="Modo Mini">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+        <rect x="2" y="5" width="12" height="8" rx="1.5"
+              fill="none" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      <span>Modo Mini</span>
+    </button>
+
     <section class="stack-wrap" aria-label="Other audio sources">
       <header class="stack-header">
         <span class="stack-title">other apps</span>
@@ -71,6 +80,39 @@
 
     <div class="status" id="status" aria-live="polite">centered</div>
   </main>
+
+  <div id="mini-bar" class="mini-bar" data-tauri-drag-region aria-label="Mini Mode">
+    <div class="mini-app left" data-tauri-drag-region>
+      <span id="mini-label-1" class="mini-name">VLC</span>
+      <span id="mini-vol-1" class="mini-vol">50%</span>
+    </div>
+    <svg id="mini-field" class="mini-field" viewBox="0 0 240 40"
+         data-tauri-drag-region="false"
+         xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="20" y1="20" x2="220" y2="20"
+            stroke="#d0cec8" stroke-width="2" stroke-dasharray="4,3"/>
+      <line id="mini-dist-1" x1="20" y1="20" x2="120" y2="20"
+            stroke="#c0392b" stroke-width="1.5" opacity="0.55"/>
+      <line id="mini-dist-2" x1="120" y1="20" x2="220" y2="20"
+            stroke="#27ae60" stroke-width="1.5" opacity="0.55"/>
+      <g id="mini-head" class="head" tabindex="0" role="slider"
+         aria-label="Listener position">
+        <ellipse id="mini-head-ellipse" cx="120" cy="20" rx="7" ry="11"
+                 fill="#fff" stroke="#1a1a1a" stroke-width="1.5"/>
+      </g>
+    </svg>
+    <div class="mini-app right" data-tauri-drag-region>
+      <span id="mini-label-2" class="mini-name">ScrCpy</span>
+      <span id="mini-vol-2" class="mini-vol">50%</span>
+    </div>
+    <button id="mini-exit-btn" class="mini-exit" type="button"
+            data-tauri-drag-region="false"
+            aria-label="Hold 3 seconds to exit Mini Mode"
+            title="Mantené apretado para salir">
+      <span class="hold-fill" aria-hidden="true"></span>
+      <span class="mini-exit-glyph" aria-hidden="true">⤢</span>
+    </button>
+  </div>
 
   <script type="module" src="main.js"></script>
 </body>
